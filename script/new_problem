@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+usage=<<-EOF
+Usage: ./script/new_problem <round_number> <problem_number> <title>
+
+
+Example:
+./script/new_problem 1 1 card_game
+EOF
+
+if ARGV.size != 3 || ARGV[0] !~ /[0-9]+/ || ARGV[1] !~ /[0-9]+/
+   ARGV[1].to_i != ARGV[1]
+  puts usage
+  exit 0
+end
+
+round_number   = "%02d" % ARGV[0].to_i
+problem_number = "%02d" % ARGV[1].to_i
+problem_name   = ARGV[2].downcase.gsub(/[^a-z0-9]/, '_')
+root_dir       = File.expand_path('..', File.dirname(__FILE__))
+
+round_dir = File.join(root_dir, "round_#{round_number}")
+filename  = "#{problem_number}_#{problem_name}"
+
+if File.exists?(round_dir)
+  STDERR.puts "#{round_dir} already exists! (ignoring)"
+else
+  FileUtils.mkdir round_dir
+end
+
+%w(00_problem_summary.md 01_problem_input.in 02_problem_expected_output.out 03_problem_code.rb).each do |file|
+  extname     = File.extname(file)
+  source      = File.join(root_dir, 'template', file)
+  destination = File.join(round_dir, "#{filename}#{extname}")
+
+  if File.exists?(destination)
+    STDERR.puts "%-100s ... %s" % [destination + ": already esists", :ignored]
+  else
+    FileUtils.cp source, destination
+    puts "%-100s ... %s" % [destination + ":", :created]
+  end
+end
+
+puts <<-EOF
+
+File generated! Now you can:
+
+  cd #{round_dir}
+
+  edit #{filename}.md  # add the summary of the problem
+  edit #{filename}.in  # with the problem input
+  edit #{filename}.out # with the expected output
+  edit #{filename}.rb  # with your code ;)
+
+and in an other terminal, you can run:
+
+  cd #{root_dir}
+  ./script/run
+
+Each time you'll save the .rb or .in file, you should get some usefull notifications!
+Happy hacking!
+EOF
